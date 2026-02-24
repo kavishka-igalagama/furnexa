@@ -26,6 +26,7 @@ import heroImage from "@public/hero-living-room.jpg";
 import galleryLiving from "@public/gallery-living-room.jpg";
 import galleryDining from "@public/gallery-dining.jpg";
 import galleryOffice from "@public/gallery-office.jpg";
+import Link from "next/link";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -361,17 +362,19 @@ const HomePage = () => {
               transition={{ duration: 0.6, delay: 0.45 }}
               className="flex flex-wrap gap-4"
             >
-              <Button
-                size="lg"
-                className="bg-accent text-accent-foreground hover:bg-accent/90 font-body text-base px-8 rounded-full shadow-gold group cursor-pointer"
-              >
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <Link href="/design">
+                <Button
+                  size="lg"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 font-body text-base px-8 rounded-full shadow-gold group cursor-pointer"
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 size="lg"
-                className="border-warm-dark-foreground/25 text-warm-dark-foreground bg-warm-dark-foreground/10 hover:bg-warm-dark-foreground/10 hover:text-warm-dark-foreground font-body text-base px-8 rounded-full backdrop-blur-sm group cursor-pointer"
+                className="border-warm-dark-foreground/25 text-warm-dark-foreground bg-warm-dark-foreground/10 hover:bg-warm-dark-foreground/20 hover:text-warm-dark-foreground font-body text-base px-8 rounded-full backdrop-blur-sm group cursor-pointer"
               >
                 <Play className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                 Watch Demo
@@ -386,7 +389,7 @@ const HomePage = () => {
               className="flex gap-8 mt-16 pt-8 border-t border-warm-dark-foreground/15"
             >
               {[
-                { value: "10+", label: "Designs Created" },
+                { value: "50+", label: "Designs Created" },
                 { value: "98%", label: "Client Satisfaction" },
                 { value: "3D", label: "Visualization" },
               ].map((stat) => (
