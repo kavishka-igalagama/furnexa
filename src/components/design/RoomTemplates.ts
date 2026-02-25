@@ -74,7 +74,7 @@ export const roomTemplates: RoomTemplate[] = [
         width: 2.5,
         length: 0.8,
         color: "#8B4513",
-        rotation: 90,
+        rotation: 270,
       },
       {
         type: "tv-stand",
