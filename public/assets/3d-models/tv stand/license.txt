@@ -1,0 +1,11 @@
+Model Information:
+* title:	TV_Stand_3
+* source:	https://sketchfab.com/3d-models/tv-stand-3-c28c1ef8e2e046d09243258f3fadb39b
+* author:	armandecor (https://sketchfab.com/armandecor)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "TV_Stand_3" (https://sketchfab.com/3d-models/tv-stand-3-c28c1ef8e2e046d09243258f3fadb39b) by armandecor (https://sketchfab.com/armandecor) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

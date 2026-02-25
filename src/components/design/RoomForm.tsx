@@ -15,7 +15,7 @@ export interface RoomSpec {
   height: number;
   wallColor: string;
   floorColor: string;
-  floorType: "tile" | "carpet" | "material";
+  floorType: "tile" | "carpet" | "wood";
 }
 
 const wallColors = [
@@ -28,10 +28,12 @@ const wallColors = [
 ];
 
 const floorColors = [
-  { label: "Light Oak", value: "#D4A76A" },
-  { label: "Walnut", value: "#6B4226" },
-  { label: "Gray Tile", value: "#B0ABAD" },
-  { label: "White Marble", value: "#E8E4E0" },
+  { label: "Honey Oak", value: "#d4a76a" },
+  { label: "Classic Teak", value: "#b88e5a" },
+  { label: "Walnut Brown", value: "#6b4226" },
+  { label: "Slate Gray", value: "#b0abad" },
+  { label: "Soft Ivory", value: "#e8e4e0" },
+  { label: "Sand Beige", value: "#c9b9a6" },
 ];
 
 interface RoomFormProps {
@@ -136,7 +138,7 @@ const RoomForm = ({ room, onChange, onOpenTemplates }: RoomFormProps) => {
           <SelectContent>
             <SelectItem value="tile">Tile</SelectItem>
             <SelectItem value="carpet">Carpet</SelectItem>
-            <SelectItem value="material">Material (Wood)</SelectItem>
+            <SelectItem value="wood">Wood</SelectItem>
           </SelectContent>
         </Select>
       </div>

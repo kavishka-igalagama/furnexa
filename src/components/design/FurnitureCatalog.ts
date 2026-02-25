@@ -32,8 +32,8 @@ export const furnitureCatalog: CatalogItem[] = [
       {
         id: "arm-chair",
         name: "Arm Chair",
-        width: 3,
-        length: 3,
+        width: 2.5,
+        length: 2.5,
         color: "#228B22",
         models: [
           {
@@ -44,7 +44,7 @@ export const furnitureCatalog: CatalogItem[] = [
         ],
       },
       {
-        id: "stool",
+        id: "stool-01",
         name: "Stool",
         width: 1.5,
         length: 1.5,
@@ -53,21 +53,21 @@ export const furnitureCatalog: CatalogItem[] = [
           {
             id: "stool-model",
             name: "Stool",
-            path: "/assets/3d-models/stool.gltf",
+            path: "/assets/3d-models/stool/scene.gltf",
           },
         ],
       },
       {
         id: "single-chair",
-        name: "Dining Chair",
-        width: 1.8,
-        length: 1.8,
+        name: "Single Chair",
+        width: 1.5,
+        length: 1.5,
         color: "#4682B4",
         models: [
           {
             id: "single-chair-model",
             name: "Dining Chair",
-            path: "/assets/3d-models/single-chair.gltf",
+            path: "/assets/3d-models/single-chair/scene.gltf",
           },
         ],
       },
@@ -81,7 +81,7 @@ export const furnitureCatalog: CatalogItem[] = [
           {
             id: "computer-chair-model",
             name: "Computer Chair",
-            path: "/assets/3d-models/computer-chair.gltf",
+            path: "/assets/3d-models/computer chair/scene.gltf",
           },
         ],
       },
@@ -102,7 +102,7 @@ export const furnitureCatalog: CatalogItem[] = [
           {
             id: "coffee-table-model",
             name: "Coffee Table",
-            path: "/assets/3d-models/coffee-table.gltf",
+            path: "/assets/3d-models/coffee table/scene.gltf",
           },
         ],
       },
@@ -111,18 +111,18 @@ export const furnitureCatalog: CatalogItem[] = [
         name: "Dining Table (6 Seat)",
         width: 6,
         length: 3,
-        color: "#8B4513",
+        color: "#dbd7d7",
         models: [
           {
             id: "dining-table-model",
             name: "Dining Table",
-            path: "/assets/3d-models/dining-table.gltf",
+            path: "/assets/3d-models/dining table/scene.gltf",
           },
         ],
       },
       {
-        id: "desk",
-        name: "Work Desk",
+        id: "office-desk",
+        name: "Office Desk",
         width: 5,
         length: 2.5,
         color: "#2F4F4F",
@@ -130,21 +130,35 @@ export const furnitureCatalog: CatalogItem[] = [
           {
             id: "desk-model",
             name: "Desk",
-            path: "/assets/3d-models/desk.gltf",
+            path: "/assets/3d-models/office desk/scene.gltf",
           },
         ],
       },
       {
-        id: "nightstand",
+        id: "tv-stand",
+        name: "TV Stand",
+        width: 6,
+        length: 1.5,
+        color: "#e69141",
+        models: [
+          {
+            id: "tv-stand-model",
+            name: "TV Stand",
+            path: "/assets/3d-models/tv stand/scene.gltf",
+          },
+        ],
+      },
+      {
+        id: "night-stand",
         name: "Nightstand",
-        width: 2,
-        length: 2,
+        width: 1.8,
+        length: 1.8,
         color: "#8B4513",
         models: [
           {
             id: "nightstand-model",
             name: "Nightstand",
-            path: "/assets/3d-models/nightstand.gltf",
+            path: "/assets/3d-models/nightstand/scene.gltf",
           },
         ],
       },
@@ -156,15 +170,15 @@ export const furnitureCatalog: CatalogItem[] = [
     subtypes: [
       {
         id: "two-seater-sofa",
-        name: "3 Seater Sofa",
+        name: "2 Seater Sofa",
         width: 7,
         length: 3,
-        color: "#8B4513",
+        color: "#f3d9c4",
         models: [
           {
             id: "two-seater-sofa-model",
             name: "2 Seater Sofa",
-            path: "/assets/3d-models/sofa-2-seater/scene.gltf",
+            path: "/assets/3d-models/2 seat sofa/scene.gltf",
           },
         ],
       },
@@ -173,12 +187,12 @@ export const furnitureCatalog: CatalogItem[] = [
         name: "L Shape Sofa",
         width: 9,
         length: 6,
-        color: "#654321",
+        color: "#c6c2be",
         models: [
           {
             id: "l-shape-sofa-model",
             name: "L Shape Sofa",
-            path: "/assets/3d-models/l-shape-sofa/scene.gltf",
+            path: "/assets/3d-models/L shape sofa/scene.gltf",
           },
         ],
       },
@@ -190,30 +204,30 @@ export const furnitureCatalog: CatalogItem[] = [
     name: "Bed",
     subtypes: [
       {
-        id: "single-bed",
-        name: "Single Bed",
-        width: 3,
-        length: 6.25,
-        color: "#D2691E",
+        id: "queen-bed",
+        name: "Queen Bed",
+        width: 5,
+        length: 6,
+        color: "#dbd7d7",
         models: [
           {
-            id: "single-bed-model",
-            name: "Single Bed",
-            path: "/assets/3d-models/single-bed/single-bed.gltf",
+            id: "queen-bed-model",
+            name: "Queen Bed",
+            path: "/assets/3d-models/queen bed/scene.gltf",
           },
         ],
       },
       {
-        id: "double-bed",
-        name: "Queen Bed",
-        width: 5,
-        length: 6.5,
-        color: "#FFFFFF",
+        id: "king-bed",
+        name: "King Bed",
+        width: 6,
+        length: 6,
+        color: "#C8D4DE",
         models: [
           {
-            id: "double-bed-model",
-            name: "Double Bed",
-            path: "/assets/3d-models/double-bed.gltf",
+            id: "king-bed-model",
+            name: "King Bed",
+            path: "/assets/3d-models/king bed/king-bed.gltf",
           },
         ],
       },
@@ -225,7 +239,7 @@ export const furnitureCatalog: CatalogItem[] = [
     name: "Storage",
     subtypes: [
       {
-        id: "bookshelf",
+        id: "books-helf",
         name: "Bookshelf",
         width: 3,
         length: 1,
@@ -234,12 +248,12 @@ export const furnitureCatalog: CatalogItem[] = [
           {
             id: "bookshelf-model",
             name: "Bookshelf",
-            path: "/assets/3d-models/bookshelf.gltf",
+            path: "/assets/3d-models/bookshelf/scene.gltf",
           },
         ],
       },
       {
-        id: "dresser",
+        id: "dresser-01",
         name: "Dresser",
         width: 4,
         length: 1.8,
@@ -248,21 +262,21 @@ export const furnitureCatalog: CatalogItem[] = [
           {
             id: "dresser-model",
             name: "Dresser",
-            path: "/assets/3d-models/dresser.gltf",
+            path: "/assets/3d-models/dresser/scene.gltf",
           },
         ],
       },
       {
-        id: "wardrobe",
+        id: "wardrobe-01",
         name: "Wardrobe",
         width: 5,
         length: 2,
-        color: "#6B4226",
+        color: "#c6c2be",
         models: [
           {
             id: "wardrobe-model",
             name: "Wardrobe",
-            path: "/assets/3d-models/wardrobe.gltf",
+            path: "/assets/3d-models/wardrobe/scene.gltf",
           },
         ],
       },

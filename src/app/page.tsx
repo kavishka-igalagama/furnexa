@@ -27,6 +27,7 @@ import galleryLiving from "@public/gallery-living-room.jpg";
 import galleryDining from "@public/gallery-dining.jpg";
 import galleryOffice from "@public/gallery-office.jpg";
 import Link from "next/link";
+import Image from "next/image";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -546,11 +547,12 @@ const HomePage = () => {
                 className="group overflow-hidden rounded-xl border border-border/60 bg-card hover:shadow-elevated transition-all duration-500"
               >
                 <div className="relative overflow-hidden aspect-4/3">
-                  <img
-                    src={item.image.src}
+                  <Image
+                    src={item.image}
                     alt={item.title}
+                    fill
+                    sizes="(min-width: 768px) 33vw, 100vw"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
                   />
                 </div>
                 <div className="p-6">

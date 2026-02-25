@@ -1,5 +1,13 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Stage, Layer, Rect, Text, Line, Group } from "react-konva";
+import {
+  Stage,
+  Layer,
+  Rect,
+  Text,
+  Line,
+  Group,
+  Transformer,
+} from "react-konva";
 import type { RoomSpec } from "./RoomForm";
 import type { FurnitureItem } from "./FurniturePanel";
 import Konva from "konva";
@@ -7,7 +15,7 @@ import Konva from "konva";
 interface PlacedFurniture extends FurnitureItem {
   x: number;
   y: number;
-  rotated: boolean;
+  rotation: number; // degrees
 }
 
 interface RoomCanvasProps {
@@ -16,8 +24,15 @@ interface RoomCanvasProps {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onMove: (id: string, x: number, y: number) => void;
+  onResize: (
+    id: string,
+    width: number,
+    height: number,
+    x: number,
+    y: number,
+  ) => void;
   onDelete: (id: string) => void;
-  onRotate: (id: string) => void;
+  onRotate: (id: string, rotation: number) => void;
   onColorChange: (id: string, color: string) => void;
 }
 
@@ -29,11 +44,13 @@ const RoomCanvas = ({
   selectedId,
   onSelect,
   onMove,
+  onResize,
   onDelete,
   onRotate,
   onColorChange,
 }: RoomCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const transformerRef = useRef<Konva.Transformer>(null);
   const [stageSize, setStageSize] = useState({ width: 700, height: 500 });
   const [zoom, setZoom] = useState(1);
 
@@ -106,11 +123,16 @@ const RoomCanvas = ({
     return room.floorColor;
   };
 
-  const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>, id: string) => {
+  const handleDragEnd = (
+    e: Konva.KonvaEventObject<DragEvent>,
+    item: PlacedFurniture,
+  ) => {
     const node = e.target;
-    const newX = node.x() / (SCALE * viewScale);
-    const newY = node.y() / (SCALE * viewScale);
-    onMove(id, Math.max(0, newX), Math.max(0, newY));
+    const centerX = node.x();
+    const centerY = node.y();
+    const newX = centerX / (SCALE * viewScale) - item.width / 2;
+    const newY = centerY / (SCALE * viewScale) - item.height / 2;
+    onMove(item.id, Math.max(0, newX), Math.max(0, newY));
   };
 
   const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -122,6 +144,30 @@ const RoomCanvas = ({
       onSelect(null);
     }
   };
+
+  useEffect(() => {
+    const transformer = transformerRef.current;
+    if (!transformer) return;
+
+    if (!selectedId) {
+      transformer.nodes([]);
+      transformer.getLayer()?.batchDraw();
+      return;
+    }
+
+    const stage = transformer.getStage();
+    if (!stage) return;
+
+    const selectedNode = stage.findOne(`#furniture-${selectedId}`);
+    if (!selectedNode) {
+      transformer.nodes([]);
+      transformer.getLayer()?.batchDraw();
+      return;
+    }
+
+    transformer.nodes([selectedNode]);
+    transformer.getLayer()?.batchDraw();
+  }, [selectedId, furniture]);
 
   return (
     <div
@@ -183,19 +229,35 @@ const RoomCanvas = ({
 
             {/* Furniture */}
             {furniture.map((item) => {
-              const fw = item.width * SCALE * viewScale;
-              const fh = item.height * SCALE * viewScale;
-              const displayFw = item.rotated ? fh : fw;
-              const displayFh = item.rotated ? fw : fh;
+              const displayFw = item.width * SCALE * viewScale;
+              const displayFh = item.height * SCALE * viewScale;
               const isSelected = selectedId === item.id;
+              const isLShapeSofa = item.type === "l-shape-sofa";
+              const centerX = (item.x + item.width / 2) * SCALE * viewScale;
+              const centerY = (item.y + item.height / 2) * SCALE * viewScale;
+              const markerWidth = Math.max(8, Math.min(displayFw * 0.35, 20));
+              const markerDepth = Math.max(4, Math.min(displayFh * 0.18, 10));
+              const markerStartX = (displayFw - markerWidth) / 2;
+              const markerMidX = markerStartX + markerWidth / 2;
+              const markerY = Math.max(2, displayFh - markerDepth - 4);
+              const sofaArmThickness = Math.max(
+                8,
+                Math.min(Math.max(displayFw, displayFh) * 0.35, displayFh - 6),
+              );
+              const sofaArmWidth = Math.min(sofaArmThickness, displayFw - 6);
+              const sofaArmDepth = Math.min(sofaArmThickness, displayFh - 6);
 
               return (
                 <Group
                   key={item.id}
-                  x={item.x * SCALE * viewScale}
-                  y={item.y * SCALE * viewScale}
+                  id={`furniture-${item.id}`}
+                  x={centerX}
+                  y={centerY}
+                  offsetX={displayFw / 2}
+                  offsetY={displayFh / 2}
+                  rotation={item.rotation || 0}
                   draggable
-                  onDragEnd={(e) => handleDragEnd(e, item.id)}
+                  onDragEnd={(e) => handleDragEnd(e, item)}
                   onClick={(e) => {
                     e.cancelBubble = true;
                     onSelect(item.id);
@@ -203,6 +265,47 @@ const RoomCanvas = ({
                   onTap={(e) => {
                     e.cancelBubble = true;
                     onSelect(item.id);
+                  }}
+                  onTransformEnd={(e) => {
+                    const node = e.target;
+                    const scaleX = node.scaleX();
+                    const scaleY = node.scaleY();
+                    const rawScale = Math.min(scaleX, scaleY);
+                    const minScale = Math.max(
+                      0.5 / item.width,
+                      0.5 / item.height,
+                    );
+                    const maxScale = Math.min(
+                      room.width / item.width,
+                      room.height / item.height,
+                    );
+                    const nextScale = Math.min(
+                      maxScale,
+                      Math.max(minScale, rawScale),
+                    );
+
+                    const nextWidth = Number(
+                      (item.width * nextScale).toFixed(2),
+                    );
+                    const nextHeight = Number(
+                      (item.height * nextScale).toFixed(2),
+                    );
+
+                    const centerFeetX = item.x + item.width / 2;
+                    const centerFeetY = item.y + item.height / 2;
+
+                    const nextX = Math.min(
+                      Math.max(0, centerFeetX - nextWidth / 2),
+                      Math.max(0, room.width - nextWidth),
+                    );
+                    const nextY = Math.min(
+                      Math.max(0, centerFeetY - nextHeight / 2),
+                      Math.max(0, room.height - nextHeight),
+                    );
+
+                    node.scaleX(1);
+                    node.scaleY(1);
+                    onResize(item.id, nextWidth, nextHeight, nextX, nextY);
                   }}
                 >
                   {/* Selection highlight */}
@@ -219,14 +322,55 @@ const RoomCanvas = ({
                       fill="transparent"
                     />
                   )}
-                  <Rect
-                    width={displayFw}
-                    height={displayFh}
-                    fill={item.color}
-                    cornerRadius={3}
-                    shadowColor="rgba(0,0,0,0.15)"
-                    shadowBlur={isSelected ? 8 : 3}
-                    shadowOffsetY={2}
+                  {isLShapeSofa ? (
+                    <Line
+                      points={[
+                        0,
+                        0,
+                        displayFw,
+                        0,
+                        displayFw,
+                        sofaArmDepth,
+                        sofaArmWidth,
+                        sofaArmDepth,
+                        sofaArmWidth,
+                        displayFh,
+                        0,
+                        displayFh,
+                      ]}
+                      closed
+                      fill={item.color}
+                      stroke="rgba(0,0,0,0.18)"
+                      strokeWidth={1}
+                      cornerRadius={3}
+                      shadowColor="rgba(0,0,0,0.15)"
+                      shadowBlur={isSelected ? 8 : 3}
+                      shadowOffsetY={2}
+                    />
+                  ) : (
+                    <Rect
+                      width={displayFw}
+                      height={displayFh}
+                      fill={item.color}
+                      cornerRadius={3}
+                      shadowColor="rgba(0,0,0,0.15)"
+                      shadowBlur={isSelected ? 8 : 3}
+                      shadowOffsetY={2}
+                    />
+                  )}
+                  <Line
+                    points={[
+                      markerStartX,
+                      markerY,
+                      markerStartX + markerWidth,
+                      markerY,
+                      markerMidX,
+                      markerY + markerDepth,
+                    ]}
+                    closed
+                    fill="rgba(255,255,255,0.95)"
+                    stroke="rgba(0,0,0,0.35)"
+                    strokeWidth={0.8}
                   />
                   <Text
                     text={item.label}
@@ -245,6 +389,34 @@ const RoomCanvas = ({
                 </Group>
               );
             })}
+
+            {selectedId && (
+              <Transformer
+                ref={transformerRef}
+                rotateEnabled={false}
+                enabledAnchors={[
+                  "top-left",
+                  "top-right",
+                  "bottom-left",
+                  "bottom-right",
+                ]}
+                keepRatio
+                boundBoxFunc={(oldBox, newBox) => {
+                  const minSize = 0.5 * SCALE * viewScale;
+                  if (newBox.width < minSize || newBox.height < minSize) {
+                    return oldBox;
+                  }
+                  return newBox;
+                }}
+                anchorFill="hsl(32, 80%, 50%)"
+                anchorStroke="white"
+                anchorStrokeWidth={1}
+                borderStroke="hsl(32, 80%, 50%)"
+                borderStrokeWidth={1.5}
+                borderDash={[4, 3]}
+                anchorSize={8}
+              />
+            )}
           </Group>
 
           {/* Scale indicator */}
@@ -338,10 +510,12 @@ const RoomCanvas = ({
               </div>
               <div className="flex gap-1">
                 <button
-                  onClick={() => onRotate(item.id)}
+                  onClick={() =>
+                    onRotate(item.id, ((item.rotation || 0) + 15) % 360)
+                  }
                   className="px-2 py-1 text-[10px] rounded bg-secondary text-secondary-foreground hover:bg-accent/10 transition-colors font-body"
                 >
-                  Rotate
+                  +15°
                 </button>
                 <button
                   onClick={() => onDelete(item.id)}
@@ -349,6 +523,25 @@ const RoomCanvas = ({
                 >
                   Delete
                 </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] text-muted-foreground">
+                  Angle
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={345}
+                  step={15}
+                  value={item.rotation || 0}
+                  onChange={(e) =>
+                    onRotate(item.id, Number(e.target.value) % 360)
+                  }
+                  className="w-28"
+                />
+                <span className="text-[10px] text-foreground font-body w-8">
+                  {(item.rotation || 0).toFixed(0)}°
+                </span>
               </div>
             </div>
           );

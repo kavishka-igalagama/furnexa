@@ -1,0 +1,11 @@
+Model Information:
+* title:	Simple Office Desk
+* source:	https://sketchfab.com/3d-models/simple-office-desk-31295af706344e358378adbbb3a70290
+* author:	reginald7 (https://sketchfab.com/reginald7)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Simple Office Desk" (https://sketchfab.com/3d-models/simple-office-desk-31295af706344e358378adbbb3a70290) by reginald7 (https://sketchfab.com/reginald7) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

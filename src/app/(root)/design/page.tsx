@@ -26,7 +26,7 @@ const DesignPage = () => {
   });
 
   const [furniture, setFurniture] = useState<
-    (FurnitureItem & { x: number; y: number; rotated: boolean })[]
+    (FurnitureItem & { x: number; y: number; rotation: number })[]
   >([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [history, setHistory] = useState<(typeof furniture)[]>([]);
@@ -43,7 +43,7 @@ const DesignPage = () => {
       id: crypto.randomUUID(),
       x: room.width / 2 - template.width / 2,
       y: room.height / 2 - template.height / 2,
-      rotated: false,
+      rotation: 0,
     };
     setFurniture((prev) => [...prev, newItem]);
     setSelectedId(newItem.id);
@@ -54,6 +54,26 @@ const DesignPage = () => {
     setFurniture((prev) => prev.map((f) => (f.id === id ? { ...f, x, y } : f)));
   }, []);
 
+  const handleResize = useCallback(
+    (id: string, width: number, height: number, x: number, y: number) => {
+      pushHistory();
+      setFurniture((prev) =>
+        prev.map((f) =>
+          f.id === id
+            ? {
+                ...f,
+                width,
+                height,
+                x,
+                y,
+              }
+            : f,
+        ),
+      );
+    },
+    [pushHistory],
+  );
+
   const handleDelete = (id: string) => {
     pushHistory();
     setFurniture((prev) => prev.filter((f) => f.id !== id));
@@ -61,10 +81,10 @@ const DesignPage = () => {
     toast.success("Item removed");
   };
 
-  const handleRotate = (id: string) => {
+  const handleRotate = (id: string, rotation: number) => {
     pushHistory();
     setFurniture((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, rotated: !f.rotated } : f)),
+      prev.map((f) => (f.id === id ? { ...f, rotation } : f)),
     );
   };
 
@@ -109,7 +129,7 @@ const DesignPage = () => {
       color: f.color,
       x: f.x,
       y: f.y,
-      rotated: false,
+      rotation: f.rotation ?? 0,
     }));
     setFurniture(items);
     setSelectedId(null);
@@ -133,6 +153,7 @@ const DesignPage = () => {
         width: item.width,
         length: item.height,
         color: item.color,
+        rotation: item.rotation || 0,
         modelPath: item.modelPath,
       })),
     };
@@ -214,6 +235,7 @@ const DesignPage = () => {
               selectedId={selectedId}
               onSelect={setSelectedId}
               onMove={handleMove}
+              onResize={handleResize}
               onDelete={handleDelete}
               onRotate={handleRotate}
               onColorChange={handleColorChange}

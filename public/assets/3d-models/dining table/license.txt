@@ -1,0 +1,11 @@
+Model Information:
+* title:	Wooden Table
+* source:	https://sketchfab.com/3d-models/wooden-table-63d7da3b2c3b46db91c848414a33a272
+* author:	Doggernaut (https://sketchfab.com/Doggernaut)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Wooden Table" (https://sketchfab.com/3d-models/wooden-table-63d7da3b2c3b46db91c848414a33a272) by Doggernaut (https://sketchfab.com/Doggernaut) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
