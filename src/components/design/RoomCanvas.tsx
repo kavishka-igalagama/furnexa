@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { memo, useRef, useEffect, useState, useCallback } from "react";
 import {
   Stage,
   Layer,
@@ -11,6 +11,17 @@ import {
 import type { RoomSpec } from "./RoomForm";
 import type { FurnitureItem } from "./FurniturePanel";
 import Konva from "konva";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface PlacedFurniture extends FurnitureItem {
   x: number;
@@ -173,6 +184,9 @@ const RoomCanvas = ({
     <div
       ref={containerRef}
       className="relative rounded-xl border border-border overflow-hidden bg-muted/30"
+      tabIndex={0}
+      role="application"
+      aria-label="2D room design canvas"
     >
       <Stage
         width={stageSize.width}
@@ -383,6 +397,8 @@ const RoomCanvas = ({
                       (displayFw / item.label.length) * 1.5,
                     )}
                     fill="white"
+                    stroke="rgba(0,0,0,0.45)"
+                    strokeWidth={0.6}
                     fontFamily="DM Sans, sans-serif"
                     fontStyle="bold"
                   />
@@ -504,6 +520,7 @@ const RoomCanvas = ({
                 <input
                   type="color"
                   value={item.color}
+                  aria-label={`${item.label} color`}
                   onChange={(e) => onColorChange(item.id, e.target.value)}
                   className="w-6 h-6 rounded border border-border cursor-pointer"
                 />
@@ -517,12 +534,27 @@ const RoomCanvas = ({
                 >
                   +15°
                 </button>
-                <button
-                  onClick={() => onDelete(item.id)}
-                  className="px-2 py-1 text-[10px] rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors font-body"
-                >
-                  Delete
-                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="px-2 py-1 text-[10px] rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors font-body">
+                      Delete
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will remove the furniture item from the room.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onDelete(item.id)}>
+                        Delete Item
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
               <div className="flex items-center gap-2">
                 <label className="text-[10px] text-muted-foreground">
@@ -534,6 +566,7 @@ const RoomCanvas = ({
                   max={345}
                   step={15}
                   value={item.rotation || 0}
+                  aria-label={`${item.label} rotation`}
                   onChange={(e) =>
                     onRotate(item.id, Number(e.target.value) % 360)
                   }
@@ -550,4 +583,4 @@ const RoomCanvas = ({
   );
 };
 
-export default RoomCanvas;
+export default memo(RoomCanvas);
