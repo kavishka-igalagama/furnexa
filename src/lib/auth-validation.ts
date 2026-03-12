@@ -13,6 +13,9 @@ export const passwordSchema = z
 
 export const registerSchema = z.object({
   name: z.string().min(2).max(120),
-  email: z.string().email().max(190).transform(normalizeEmail),
+  email: z.preprocess(
+    (value) => (typeof value === "string" ? normalizeEmail(value) : value),
+    z.string().email().max(190),
+  ),
   password: passwordSchema,
 });

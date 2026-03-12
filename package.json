@@ -8,6 +8,9 @@
                     "start":  "next start",
                     "lint":  "eslint",
                     "prisma":  "prisma",
+                    "prisma:generate":  "prisma generate",
+                    "postinstall":  "prisma generate",
+                    "reset:password":  "node scripts/reset-user-password.mjs",
                     "test":  "vitest"
                 },
     "dependencies":  {
