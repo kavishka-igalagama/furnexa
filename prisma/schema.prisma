@@ -44,6 +44,42 @@ model RoomDesign {
   user User @relation(fields: [userId], references: [id])
 }
 
+model CatalogFurnitureItem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug       String   @unique
+  groupId    String
+  groupName  String
+  groupOrder Int      @default(0)
+  itemOrder  Int      @default(0)
+  name       String
+  width      Float
+  length     Float
+  color      String
+  category   String
+  modelPath  String
+  modelId    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model CatalogRoomTemplate {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug                String   @unique
+  name                String
+  description         String
+  icon                String
+  thumbnail           String
+  width               Float
+  length              Float
+  defaultFurniture    Json
+  suggestedWallColor  String
+  suggestedFloorColor String
+  suggestedFloorType  String
+  displayOrder        Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
 // NextAuth models
 model Account {
   id String @id @default(auto()) @map("_id") @db.ObjectId

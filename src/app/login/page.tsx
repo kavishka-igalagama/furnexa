@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,9 @@ const LoginPage = () => {
       return;
     }
 
-    router.push("/design");
+    const session = await getSession();
+    const nextPath = session?.user?.role === "ADMIN" ? "/admin" : "/design";
+    router.push(nextPath);
   };
 
   return (

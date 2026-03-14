@@ -316,31 +316,32 @@ const ThreeDView = () => {
         };
       };
 
-      if (!isActive || !data.design?.roomSpecs) return;
+      const design = data.design;
+      if (!isActive || !design?.roomSpecs) return;
 
       const nextRoom: Room3DState = {
         dimensions: {
-          width: data.design.roomSpecs.width,
-          length: data.design.roomSpecs.length,
+          width: design.roomSpecs.width,
+          length: design.roomSpecs.length,
         },
         wallColor:
-          data.design.globalColors?.walls ??
-          data.design.roomSpecs.wallColor,
+          design.globalColors?.walls ??
+          design.roomSpecs.wallColor,
         floorColor:
-          data.design.globalColors?.floor ??
-          data.design.roomSpecs.floorColor,
-        floorType: isFloorType(data.design.roomSpecs.floorType)
-          ? data.design.roomSpecs.floorType
+          design.globalColors?.floor ??
+          design.roomSpecs.floorColor,
+        floorType: isFloorType(design.roomSpecs.floorType)
+          ? design.roomSpecs.floorType
           : "tile",
         ceilingColor:
-          data.design.globalColors?.ceiling ??
-          data.design.roomSpecs.ceilingColor,
+          design.globalColors?.ceiling ??
+          design.roomSpecs.ceilingColor,
       };
 
       const nextFurniture: Furniture3DItem[] = Array.isArray(
-        data.design.furnitureItems,
+        design.furnitureItems,
       )
-        ? data.design.furnitureItems.map((item) => ({
+        ? design.furnitureItems.map((item) => ({
             id: item.id,
             type: item.type ?? item.modelId,
             name: item.name ?? "Furniture",
@@ -349,15 +350,15 @@ const ThreeDView = () => {
             width: item.width ?? 1,
             length: item.length ?? 1,
             color:
-              data.design.globalColors?.furniture ?? item.color ?? "#999999",
+              design.globalColors?.furniture ?? item.color ?? "#999999",
             rotation: item.rotation ?? 0,
             modelPath: item.modelPath,
           }))
         : [];
 
       setViewState({ room: nextRoom, furniture: nextFurniture });
-      setGlobalColors(data.design.globalColors ?? null);
-      setActiveTheme(data.design.theme ?? null);
+      setGlobalColors(design.globalColors ?? null);
+      setActiveTheme(design.theme ?? null);
 
       setDesignId(designId);
       setState({
@@ -381,8 +382,8 @@ const ThreeDView = () => {
           rotation: item.rotation ?? 0,
           modelPath: item.modelPath,
         })),
-        activeTheme: data.design.theme ?? null,
-        globalColors: data.design.globalColors ?? {},
+        activeTheme: design.theme ?? null,
+        globalColors: design.globalColors ?? {},
       });
       setFurnitureColors({});
     };
@@ -588,7 +589,6 @@ const ThreeDView = () => {
     renderer.setSize(w, h);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.physicallyCorrectLights = true;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
     rendererRef.current = renderer;

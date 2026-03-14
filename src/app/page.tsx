@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 import {
   ArrowRight,
   Box,
+  ChevronDown,
   ClipboardList,
   Eye,
   Instagram,
+  LayoutDashboard,
   Linkedin,
+  LogOut,
   Maximize,
   Menu,
   Paintbrush,
@@ -20,7 +24,16 @@ import {
   UserCircle,
   X,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import heroImage from "@public/hero-living-room.jpg";
 import galleryLiving from "@public/gallery-living-room.jpg";
@@ -129,6 +142,164 @@ const galleryItems = [
   },
 ];
 
+const getDisplayName = (user?: {
+  name?: string | null;
+  email?: string | null;
+}) => {
+  if (user?.name?.trim()) return user.name.trim();
+  if (user?.email?.trim()) return user.email.trim().split("@")[0];
+  return "Designer";
+};
+
+const getInitials = (user?: { name?: string | null; email?: string | null }) => {
+  const displayName = getDisplayName(user);
+  const parts = displayName.split(/\s+/).filter(Boolean);
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+};
+
+const NavbarAuth = ({ mobile = false }: { mobile?: boolean }) => {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return mobile ? (
+      <div className="mt-3 h-24 animate-pulse rounded-2xl border border-border/60 bg-muted/40" />
+    ) : (
+      <div className="ml-4 h-10 w-44 animate-pulse rounded-full bg-muted/60" />
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <Button
+        asChild
+        variant="default"
+        size="sm"
+        className={
+          mobile
+            ? "mt-3 w-fit rounded-full bg-accent px-6 font-body text-accent-foreground hover:bg-accent/90"
+            : "ml-4 rounded-full bg-accent px-6 font-body text-accent-foreground shadow-gold hover:bg-accent/90"
+        }
+      >
+        <Link href="/login">Login</Link>
+      </Button>
+    );
+  }
+
+  const displayName = getDisplayName(session.user);
+  const dashboardHref = session.user.role === "ADMIN" ? "/admin" : "/design";
+  const dashboardLabel =
+    session.user.role === "ADMIN" ? "Admin panel" : "My designs";
+  const roleLabel = session.user.role === "ADMIN" ? "Administrator" : "Designer";
+
+  if (mobile) {
+    return (
+      <div className="mt-3 rounded-2xl border border-border/60 bg-card/80 p-4 shadow-soft">
+        <div className="flex items-center gap-3">
+          <Avatar size="lg" className="ring-2 ring-accent/20">
+            <AvatarImage
+              src={session.user.image ?? undefined}
+              alt={displayName}
+            />
+            <AvatarFallback className="bg-accent/10 font-semibold text-accent">
+              {getInitials(session.user)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate font-medium text-foreground">{displayName}</p>
+            <p className="truncate text-sm text-muted-foreground">
+              {session.user.email ?? roleLabel}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Button
+            asChild
+            size="sm"
+            className="rounded-full bg-accent px-5 text-accent-foreground hover:bg-accent/90"
+          >
+            <Link href={dashboardHref}>{dashboardLabel}</Link>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={() => void signOut({ callbackUrl: "/" })}
+          >
+            Sign Out
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="ml-4 flex items-center gap-3 rounded-full border border-border/60 bg-background/80 px-3 py-1.5 text-left shadow-soft transition-colors hover:border-accent/40 hover:bg-background"
+        >
+          <Avatar size="default" className="ring-2 ring-accent/20">
+            <AvatarImage
+              src={session.user.image ?? undefined}
+              alt={displayName}
+            />
+            <AvatarFallback className="bg-accent/10 font-semibold text-accent">
+              {getInitials(session.user)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="max-w-36">
+            <p className="truncate text-sm font-medium text-foreground">
+              {displayName}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
+          </div>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-64 rounded-2xl border-border/60 p-2"
+      >
+        <DropdownMenuLabel className="px-3 py-2">
+          <div className="flex flex-col">
+            <span className="font-medium text-foreground">{displayName}</span>
+            <span className="truncate text-xs text-muted-foreground">
+              {session.user.email ?? roleLabel}
+            </span>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer rounded-xl px-3 py-2">
+          <Link href={dashboardHref}>
+            <LayoutDashboard className="h-4 w-4" />
+            {dashboardLabel}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer rounded-xl px-3 py-2"
+          onSelect={(event) => {
+            event.preventDefault();
+            void signOut({ callbackUrl: "/" });
+          }}
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 const HomePage = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -236,15 +407,7 @@ const HomePage = () => {
                 )}
               </a>
             ))}
-            <div className="ml-4">
-              <Button
-                variant="default"
-                size="sm"
-                className="font-body rounded-full px-6 bg-accent text-accent-foreground hover:bg-accent/90 shadow-gold"
-              >
-                Login
-              </Button>
-            </div>
+            <NavbarAuth />
           </div>
 
           {/* Mobile Hamburger */}
@@ -282,13 +445,7 @@ const HomePage = () => {
                     {link.label}
                   </a>
                 ))}
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="w-fit font-body mt-3 rounded-full px-6 bg-accent text-accent-foreground hover:bg-accent/90 cursor-pointer"
-                >
-                  Login
-                </Button>
+                <NavbarAuth mobile />
               </div>
             </motion.div>
           )}
