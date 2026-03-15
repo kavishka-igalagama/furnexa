@@ -11,12 +11,14 @@ export interface FurnitureSubtype {
   width: number;
   length: number;
   color: string;
+  category: string;
   models: FurnitureModel[];
 }
 
 export interface CatalogItem {
   id: string;
   name: string;
+  category?: string;
   width?: number;
   length?: number;
   color?: string;
@@ -35,6 +37,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 2.5,
         length: 2.5,
         color: "#228B22",
+        category: "Seating",
         models: [
           {
             id: "arm-chair-model",
@@ -49,6 +52,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 1.5,
         length: 1.5,
         color: "#A52A2A",
+        category: "Seating",
         models: [
           {
             id: "stool-model",
@@ -63,6 +67,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 1.5,
         length: 1.5,
         color: "#4682B4",
+        category: "Seating",
         models: [
           {
             id: "single-chair-model",
@@ -77,6 +82,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 2,
         length: 2,
         color: "#333333",
+        category: "Seating",
         models: [
           {
             id: "computer-chair-model",
@@ -98,6 +104,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 4,
         length: 2,
         color: "#4682B4",
+        category: "Tables",
         models: [
           {
             id: "coffee-table-model",
@@ -112,6 +119,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 6,
         length: 3,
         color: "#dbd7d7",
+        category: "Tables",
         models: [
           {
             id: "dining-table-model",
@@ -126,6 +134,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 5,
         length: 2.5,
         color: "#2F4F4F",
+        category: "Tables",
         models: [
           {
             id: "desk-model",
@@ -140,6 +149,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 6,
         length: 1.5,
         color: "#e69141",
+        category: "Tables",
         models: [
           {
             id: "tv-stand-model",
@@ -154,6 +164,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 1.8,
         length: 1.8,
         color: "#8B4513",
+        category: "Tables",
         models: [
           {
             id: "nightstand-model",
@@ -174,6 +185,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 7,
         length: 3,
         color: "#f3d9c4",
+        category: "Seating",
         models: [
           {
             id: "two-seater-sofa-model",
@@ -188,6 +200,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 9,
         length: 6,
         color: "#c6c2be",
+        category: "Seating",
         models: [
           {
             id: "l-shape-sofa-model",
@@ -209,6 +222,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 5,
         length: 6,
         color: "#dbd7d7",
+        category: "Beds",
         models: [
           {
             id: "queen-bed-model",
@@ -223,6 +237,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 6,
         length: 6,
         color: "#C8D4DE",
+        category: "Beds",
         models: [
           {
             id: "king-bed-model",
@@ -244,6 +259,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 3,
         length: 1,
         color: "#8B4513",
+        category: "Storage",
         models: [
           {
             id: "bookshelf-model",
@@ -258,6 +274,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 4,
         length: 1.8,
         color: "#8B4513",
+        category: "Storage",
         models: [
           {
             id: "dresser-model",
@@ -272,6 +289,7 @@ export const furnitureCatalog: CatalogItem[] = [
         width: 5,
         length: 2,
         color: "#c6c2be",
+        category: "Storage",
         models: [
           {
             id: "wardrobe-model",

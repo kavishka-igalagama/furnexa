@@ -16,6 +16,7 @@ export interface RoomSpec {
   wallColor: string;
   floorColor: string;
   floorType: "tile" | "carpet" | "wood";
+  ceilingColor?: string;
 }
 
 const wallColors = [
@@ -93,6 +94,7 @@ const RoomForm = ({ room, onChange, onOpenTemplates }: RoomFormProps) => {
             <button
               key={c.value}
               onClick={() => update({ wallColor: c.value })}
+              aria-label={`Wall color ${c.label}`}
               className={`w-7 h-7 rounded-full border-2 transition-all ${
                 room.wallColor === c.value
                   ? "border-accent scale-110 shadow-gold"
@@ -112,6 +114,7 @@ const RoomForm = ({ room, onChange, onOpenTemplates }: RoomFormProps) => {
             <button
               key={c.value}
               onClick={() => update({ floorColor: c.value })}
+              aria-label={`Floor color ${c.label}`}
               className={`w-7 h-7 rounded-full border-2 transition-all ${
                 room.floorColor === c.value
                   ? "border-accent scale-110 shadow-gold"

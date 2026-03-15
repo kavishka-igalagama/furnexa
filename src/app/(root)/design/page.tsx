@@ -11,10 +11,11 @@ import FurniturePanel, {
 } from "@/components/design/FurniturePanel";
 import RoomCanvas from "@/components/design/RoomCanvas";
 import TemplatesDialog from "@/components/design/TemplatesDialog";
-import type { RoomTemplate } from "@/components/design/RoomTemplates";
+import type { RoomTemplate } from "@/data/templates";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useMutation } from "@/hooks/use-mutation";
+import { useRoomTemplates } from "@/hooks/use-room-templates";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +73,25 @@ type DesignPayload = {
 
 type DesignResponse = { design: { id: string } };
 
+const loadStoredThemes = (): Theme[] => {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const saved = window.localStorage.getItem("furnexa_custom_themes");
+    if (!saved) return [];
+
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter(
+      (theme) =>
+        theme?.id && theme?.label && theme?.wallColor && theme?.floorColor,
+    );
+  } catch {
+    return [];
+  }
+};
+
 const DesignPage = () => {
   const router = useRouter();
   const {
@@ -85,10 +105,11 @@ const DesignPage = () => {
     canUndo,
     canRedo,
   } = useDesignContext();
+  const { templates, isLoading: templatesLoading } = useRoomTemplates();
   const { room, furniture, activeTheme, globalColors } = state;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [customThemes, setCustomThemes] = useState<Theme[]>([]);
+  const [customThemes, setCustomThemes] = useState<Theme[]>(loadStoredThemes);
   const [customThemeName, setCustomThemeName] = useState("");
 
   const themes: Theme[] = [
@@ -131,24 +152,10 @@ const DesignPage = () => {
   );
 
   useEffect(() => {
-    const saved = localStorage.getItem("furnexa_custom_themes");
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) {
-        setCustomThemes(
-          parsed.filter(
-            (t) => t?.id && t?.label && t?.wallColor && t?.floorColor,
-          ),
-        );
-      }
-    } catch {
-      setCustomThemes([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("furnexa_custom_themes", JSON.stringify(customThemes));
+    window.localStorage.setItem(
+      "furnexa_custom_themes",
+      JSON.stringify(customThemes),
+    );
   }, [customThemes]);
 
   const saveDesign = useMutation<DesignResponse, DesignPayload>(
@@ -219,14 +226,17 @@ const DesignPage = () => {
     [commit],
   );
 
-  const handleDelete = (id: string) => {
-    commit("delete-furniture", (prev) => ({
-      ...prev,
-      furniture: prev.furniture.filter((f) => f.id !== id),
-    }));
-    setSelectedId(null);
-    toast.success("Item removed");
-  };
+  const handleDelete = useCallback(
+    (id: string) => {
+      commit("delete-furniture", (prev) => ({
+        ...prev,
+        furniture: prev.furniture.filter((f) => f.id !== id),
+      }));
+      setSelectedId(null);
+      toast.success("Item removed");
+    },
+    [commit],
+  );
 
   const handleRotate = (id: string, rotation: number) => {
     commit("rotate-furniture", (prev) => ({
@@ -517,7 +527,7 @@ const DesignPage = () => {
   ]);
 
   return (
-    <div className="min-h-screen bg-background lg:flex lg:h-screen lg:flex-col lg:overflow-hidden">
+    <div className="min-h-screen bg-background lg:flex lg:h-dvh lg:flex-col lg:overflow-hidden">
       <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-4 border-b border-border bg-card/80 px-4 backdrop-blur-xl lg:px-6">
         <Link
           href="/"
@@ -608,7 +618,7 @@ const DesignPage = () => {
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="w-full space-y-6 border-b border-border bg-card/50 p-5 lg:h-full lg:w-72 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0 xl:w-80"
+          className="w-full space-y-6 border-b border-border bg-card/50 p-5 lg:h-full lg:w-72 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:overscroll-contain xl:w-80"
         >
           <RoomForm
             room={room}
@@ -740,7 +750,7 @@ const DesignPage = () => {
           <FurniturePanel onAdd={handleAddFurniture} />
         </motion.aside>
 
-        <main className="flex-1 p-4 lg:min-h-0 lg:overflow-hidden lg:p-8 flex items-start justify-center">
+        <main className="flex flex-1 items-start justify-center p-4 lg:min-h-0 lg:overflow-hidden lg:p-8">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -774,6 +784,8 @@ const DesignPage = () => {
         open={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
         onSelect={handleTemplateSelect}
+        templates={templates}
+        isLoading={templatesLoading}
       />
     </div>
   );

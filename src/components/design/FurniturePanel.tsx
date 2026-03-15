@@ -1,8 +1,5 @@
-import {
-  furnitureCatalog,
-  type CatalogItem,
-  type FurnitureSubtype,
-} from "./FurnitureCatalog";
+import { type CatalogItem, type FurnitureSubtype } from "./FurnitureCatalog";
+import { useFurnitureCatalog } from "@/hooks/use-furniture-catalog";
 import {
   Armchair,
   RectangleHorizontal,
@@ -12,7 +9,8 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
 
 export interface FurnitureItem {
   id: string;
@@ -38,7 +36,37 @@ interface FurniturePanelProps {
 }
 
 const FurniturePanel = ({ onAdd }: FurniturePanelProps) => {
+  const { catalog } = useFurnitureCatalog();
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("All");
+
+  const categories = useMemo(() => {
+    const values = new Set<string>();
+    catalog.forEach((item) => {
+      item.subtypes?.forEach((sub) => values.add(sub.category));
+    });
+    return ["All", ...Array.from(values).sort()];
+  }, [catalog]);
+
+  const filteredCatalog = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return catalog
+      .map((item) => {
+        if (!item.subtypes) return item;
+        const subtypes = item.subtypes.filter((sub) => {
+          const matchesCategory =
+            category === "All" || sub.category === category;
+          const matchesQuery =
+            normalized.length === 0 ||
+            sub.name.toLowerCase().includes(normalized) ||
+            item.name.toLowerCase().includes(normalized);
+          return matchesCategory && matchesQuery;
+        });
+        return { ...item, subtypes };
+      })
+      .filter((item) => (item.subtypes ? item.subtypes.length > 0 : true));
+  }, [category, catalog, query]);
 
   const toggle = (id: string) =>
     setExpandedIds((prev) =>
@@ -64,8 +92,29 @@ const FurniturePanel = ({ onAdd }: FurniturePanelProps) => {
       <h3 className="font-display text-sm font-semibold text-foreground mb-3">
         Furniture Catalog
       </h3>
+      <div className="space-y-2">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search furniture..."
+          className="h-9 text-sm"
+          aria-label="Search furniture"
+        />
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm font-body"
+          aria-label="Filter furniture by category"
+        >
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="space-y-1">
-        {furnitureCatalog.map((item) => {
+        {filteredCatalog.map((item) => {
           const Icon = iconMap[item.id] || RectangleHorizontal;
           const isExpanded = expandedIds.includes(item.id);
           const hasSubtypes = !!item.subtypes;
@@ -108,6 +157,9 @@ const FurniturePanel = ({ onAdd }: FurniturePanelProps) => {
                       <span className="text-xs font-body text-foreground flex-1">
                         {sub.name}
                       </span>
+                      <span className="text-[9px] text-muted-foreground font-body uppercase">
+                        {sub.category}
+                      </span>
                       <span className="text-[10px] text-muted-foreground">
                         {sub.width}×{sub.length}ft
                       </span>
@@ -118,9 +170,14 @@ const FurniturePanel = ({ onAdd }: FurniturePanelProps) => {
             </div>
           );
         })}
+        {filteredCatalog.length === 0 && (
+          <p className="text-xs text-muted-foreground font-body px-2 py-3">
+            No furniture matches your search.
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
-export default FurniturePanel;
+export default memo(FurniturePanel);

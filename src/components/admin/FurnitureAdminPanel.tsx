@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +31,10 @@ import {
   type ManagedFurnitureItem,
 } from "@/hooks/use-furniture-catalog";
 
-type DraftItem = Omit<ManagedFurnitureItem, "id"> & { id?: string };
+type DraftItem = Omit<ManagedFurnitureItem, "recordId" | "id"> & {
+  recordId?: string;
+  id?: string;
+};
 
 const emptyDraft: DraftItem = {
   groupId: "chair",
@@ -69,6 +73,7 @@ const validateDraft = (draft: DraftItem) => {
 };
 
 const buildDraftFromItem = (item: ManagedFurnitureItem): DraftItem => ({
+  recordId: item.recordId,
   id: item.id,
   groupId: item.groupId,
   groupName: item.groupName,
@@ -82,10 +87,11 @@ const buildDraftFromItem = (item: ManagedFurnitureItem): DraftItem => ({
 });
 
 const FurnitureAdminPanel = () => {
-  const { items, saveItems } = useFurnitureCatalog();
+  const { items, refresh, isLoading } = useFurnitureCatalog();
   const [draft, setDraft] = useState<DraftItem>(emptyDraft);
   const [isCustomGroup, setIsCustomGroup] = useState(false);
   const [editing, setEditing] = useState<DraftItem | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const groupOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -103,14 +109,16 @@ const FurnitureAdminPanel = () => {
     setDraft((prev) => ({ ...prev, ...patch }));
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const errors = validateDraft(draft);
     if (errors.length > 0) {
       toast.error(errors[0]);
       return;
     }
 
-    const newItem: ManagedFurnitureItem = {
+    setIsSaving(true);
+
+    const payload = {
       id: draft.id ?? `item-${crypto.randomUUID()}`,
       groupId: draft.groupId,
       groupName: draft.groupName,
@@ -123,24 +131,51 @@ const FurnitureAdminPanel = () => {
       modelId: draft.modelId?.trim() || undefined,
     };
 
-    saveItems([newItem, ...items]);
-    setDraft(emptyDraft);
-    setIsCustomGroup(false);
-    toast.success("Furniture item added");
+    try {
+      const res = await fetch("/api/furniture-catalog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to add furniture item");
+      }
+      await refresh();
+      setDraft(emptyDraft);
+      setIsCustomGroup(false);
+      toast.success("Furniture item added");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add furniture item",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editing) return;
+    if (!editing.recordId) {
+      toast.error("Missing database id for this furniture item");
+      return;
+    }
     const errors = validateDraft(editing);
     if (errors.length > 0) {
       toast.error(errors[0]);
       return;
     }
 
-    const next = items.map((item) =>
-      item.id === editing.id
-        ? {
-            ...item,
+    setIsSaving(true);
+
+    try {
+      const res = await fetch(
+        `/api/furniture-catalog/${editing.recordId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editing.id,
             groupId: editing.groupId,
             groupName: editing.groupName,
             name: editing.name.trim(),
@@ -150,18 +185,54 @@ const FurnitureAdminPanel = () => {
             category: editing.category.trim(),
             modelPath: editing.modelPath.trim(),
             modelId: editing.modelId?.trim() || undefined,
-          }
-        : item,
-    );
-    saveItems(next);
-    setEditing(null);
-    toast.success("Furniture item updated");
+          }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to update furniture item");
+      }
+      await refresh();
+      setEditing(null);
+      toast.success("Furniture item updated");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update furniture item",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    const next = items.filter((item) => item.id !== id);
-    saveItems(next);
-    toast.success("Furniture item deleted");
+  const handleDelete = async (recordId?: string) => {
+    if (!recordId) {
+      toast.error("Missing database id for this furniture item");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const res = await fetch(`/api/furniture-catalog/${recordId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to delete furniture item");
+      }
+      await refresh();
+      toast.success("Furniture item deleted");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete furniture item",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleFilePick = (file: File | null, setTarget: (path: string) => void) => {
@@ -185,10 +256,29 @@ const FurnitureAdminPanel = () => {
               Furniture Catalogue Management
             </h1>
           </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Link
+              href="/admin"
+              className="rounded-md border border-border px-3 py-2 text-muted-foreground hover:text-foreground"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/admin/templates"
+              className="rounded-md border border-border px-3 py-2 text-muted-foreground hover:text-foreground"
+            >
+              Templates
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 lg:px-8 py-10 space-y-8">
+        {isLoading && (
+          <div className="rounded-xl border border-border/60 bg-card/70 px-4 py-3 text-sm text-muted-foreground">
+            Loading furniture catalogue...
+          </div>
+        )}
         <section className="rounded-2xl border border-border/60 bg-card/70 p-6 shadow-soft">
           <div className="flex items-center gap-2 mb-6">
             <Plus className="w-4 h-4 text-accent" />
@@ -360,7 +450,7 @@ const FurnitureAdminPanel = () => {
           </div>
 
           <div className="mt-6 flex items-center gap-3">
-            <Button onClick={handleAdd} className="gap-2">
+            <Button onClick={() => void handleAdd()} className="gap-2" disabled={isSaving}>
               <Plus className="w-4 h-4" /> Add Item
             </Button>
             <span className="text-xs text-muted-foreground">
@@ -381,7 +471,7 @@ const FurnitureAdminPanel = () => {
 
           <div className="divide-y divide-border/60">
             {items.map((item) => (
-              <div key={item.id} className="py-4 flex flex-col gap-3">
+              <div key={item.recordId ?? item.id} className="py-4 flex flex-col gap-3">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-foreground">
@@ -424,7 +514,7 @@ const FurnitureAdminPanel = () => {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(item.id)}>
+                          <AlertDialogAction onClick={() => void handleDelete(item.recordId)}>
                             Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>
@@ -581,7 +671,9 @@ const FurnitureAdminPanel = () => {
             <Button variant="outline" onClick={() => setEditing(null)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdate}>Save Changes</Button>
+            <Button onClick={() => void handleUpdate()} disabled={isSaving}>
+              Save Changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
