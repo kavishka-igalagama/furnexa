@@ -44,6 +44,7 @@ interface FurnitureTransform {
 }
 
 const WALL_HEIGHT = 9;
+const SCENE_BG_COLOR = 0x0b0b0f;
 const FLOOR_TEXTURES: Record<FloorType, string> = {
   tile: "/assets/floor-textures/tile%20floor.jpg",
   carpet: "/assets/floor-textures/carpet%20floor.jpg",
@@ -133,6 +134,7 @@ const ThreeDView = () => {
   const ceilingMaterialRef = useRef<THREE.MeshStandardMaterial | null>(null);
   const floorTextureRef = useRef<THREE.Texture | null>(null);
   const aoTextureRef = useRef<THREE.Texture | null>(null);
+  const wallDetailTextureRef = useRef<THREE.Texture | null>(null);
   const zoomControllerRef = useRef<{
     zoomIn: () => void;
     zoomOut: () => void;
@@ -140,6 +142,7 @@ const ThreeDView = () => {
   } | null>(null);
   const spotlightRef = useRef<THREE.SpotLight | null>(null);
   const shadowPlaneRef = useRef<THREE.Mesh | null>(null);
+  const roomWallsRef = useRef<THREE.Mesh[]>([]);
   const pendingLoadsRef = useRef(0);
   const gltfLoaderRef = useRef<GLTFLoader | null>(null);
   const modelCacheRef = useRef<Map<string, THREE.Object3D>>(new Map());
@@ -185,7 +188,10 @@ const ThreeDView = () => {
   });
 
   const commit = useCallback(
-    (type: string, updater: (prev: typeof designState) => typeof designState) => {
+    (
+      type: string,
+      updater: (prev: typeof designState) => typeof designState,
+    ) => {
       if (!designId || contextDesignId !== designId) return;
       const next = updater(designState);
       applyAction(type, next);
@@ -199,22 +205,19 @@ const ThreeDView = () => {
   const wireframeColor = useMemo(() => "rgba(255, 200, 120, 0.6)", []);
   const wireframeGridColor = useMemo(() => "rgba(255, 255, 255, 0.15)", []);
 
-  const buildMaterial = useCallback(
-    (mode: ShadingMode, color: string) => {
-      if (mode === "flat") {
-        return new THREE.MeshBasicMaterial({ color });
-      }
-      if (mode === "gouraud") {
-        return new THREE.MeshLambertMaterial({ color });
-      }
-      return new THREE.MeshPhongMaterial({
-        color,
-        shininess: 60,
-        specular: new THREE.Color("#ffffff"),
-      });
-    },
-    [],
-  );
+  const buildMaterial = useCallback((mode: ShadingMode, color: string) => {
+    if (mode === "flat") {
+      return new THREE.MeshBasicMaterial({ color });
+    }
+    if (mode === "gouraud") {
+      return new THREE.MeshLambertMaterial({ color });
+    }
+    return new THREE.MeshPhongMaterial({
+      color,
+      shininess: 60,
+      specular: new THREE.Color("#ffffff"),
+    });
+  }, []);
 
   const applyMaterialColor = useCallback(
     (material: THREE.Material | THREE.Material[], color: string) => {
@@ -324,18 +327,13 @@ const ThreeDView = () => {
           width: design.roomSpecs.width,
           length: design.roomSpecs.length,
         },
-        wallColor:
-          design.globalColors?.walls ??
-          design.roomSpecs.wallColor,
-        floorColor:
-          design.globalColors?.floor ??
-          design.roomSpecs.floorColor,
+        wallColor: design.globalColors?.walls ?? design.roomSpecs.wallColor,
+        floorColor: design.globalColors?.floor ?? design.roomSpecs.floorColor,
         floorType: isFloorType(design.roomSpecs.floorType)
           ? design.roomSpecs.floorType
           : "tile",
         ceilingColor:
-          design.globalColors?.ceiling ??
-          design.roomSpecs.ceilingColor,
+          design.globalColors?.ceiling ?? design.roomSpecs.ceilingColor,
       };
 
       const nextFurniture: Furniture3DItem[] = Array.isArray(
@@ -349,8 +347,7 @@ const ThreeDView = () => {
             y: item.y,
             width: item.width ?? 1,
             length: item.length ?? 1,
-            color:
-              design.globalColors?.furniture ?? item.color ?? "#999999",
+            color: design.globalColors?.furniture ?? item.color ?? "#999999",
             rotation: item.rotation ?? 0,
             modelPath: item.modelPath,
           }))
@@ -392,13 +389,7 @@ const ThreeDView = () => {
     return () => {
       isActive = false;
     };
-  }, [
-    designId,
-    contextDesignId,
-    designState,
-    setDesignId,
-    setState,
-  ]);
+  }, [designId, contextDesignId, designState, setDesignId, setState]);
 
   useEffect(() => {
     if (!wireframeCanvasRef.current) return;
@@ -575,11 +566,12 @@ const ThreeDView = () => {
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf5f0eb);
+    scene.background = new THREE.Color(SCENE_BG_COLOR);
 
     // Camera
     const camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 1000);
     const maxDim = Math.max(room.dimensions.width, room.dimensions.length);
+    scene.fog = new THREE.Fog(SCENE_BG_COLOR, maxDim * 1.8, maxDim * 4.2);
     camera.position.set(maxDim * 0.8, WALL_HEIGHT * 1.5, maxDim * 1.2);
     camera.lookAt(0, WALL_HEIGHT * 0.3, 0);
 
@@ -587,10 +579,11 @@ const ThreeDView = () => {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(w, h);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.05;
     rendererRef.current = renderer;
     container.appendChild(renderer.domElement);
 
@@ -606,6 +599,7 @@ const ThreeDView = () => {
     const floorTexture = new THREE.TextureLoader().load(
       FLOOR_TEXTURES[floorType],
     );
+    floorTexture.colorSpace = THREE.SRGBColorSpace;
     floorTexture.wrapS = THREE.RepeatWrapping;
     floorTexture.wrapT = THREE.RepeatWrapping;
     floorTexture.repeat.set(Math.max(1, rw / 4), Math.max(1, rl / 4));
@@ -625,17 +619,35 @@ const ThreeDView = () => {
     const aoTexture = new THREE.CanvasTexture(aoCanvas);
     aoTextureRef.current = aoTexture;
 
+    const wallDetailCanvas = document.createElement("canvas");
+    wallDetailCanvas.width = 128;
+    wallDetailCanvas.height = 128;
+    const wallDetailCtx = wallDetailCanvas.getContext("2d");
+    if (wallDetailCtx) {
+      for (let y = 0; y < 128; y += 1) {
+        for (let x = 0; x < 128; x += 1) {
+          const n = 122 + Math.floor(Math.random() * 18);
+          wallDetailCtx.fillStyle = `rgb(${n}, ${n}, ${n})`;
+          wallDetailCtx.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+    const wallDetailTexture = new THREE.CanvasTexture(wallDetailCanvas);
+    wallDetailTexture.wrapS = THREE.RepeatWrapping;
+    wallDetailTexture.wrapT = THREE.RepeatWrapping;
+    wallDetailTexture.repeat.set(
+      Math.max(2, rw / 2.5),
+      Math.max(2, WALL_HEIGHT / 2),
+    );
+    wallDetailTextureRef.current = wallDetailTexture;
+
     const floorMat = new THREE.MeshStandardMaterial({
       map: floorTexture,
       aoMap: aoTexture,
       aoMapIntensity: 0.6,
       color: floorColor,
       roughness:
-        floorType === "carpet"
-          ? 0.9
-          : floorType === "tile"
-            ? 0.3
-            : 0.5,
+        floorType === "carpet" ? 0.9 : floorType === "tile" ? 0.3 : 0.5,
       metalness: floorType === "tile" ? 0.2 : 0,
     });
     floorTextureRef.current = floorTexture;
@@ -652,12 +664,15 @@ const ThreeDView = () => {
     // Walls
     const wallMat = new THREE.MeshStandardMaterial({
       color: wallColor,
-      roughness: 0.5,
+      roughness: 0.72,
       side: THREE.DoubleSide,
       aoMap: aoTexture,
       aoMapIntensity: 0.35,
+      bumpMap: wallDetailTexture,
+      bumpScale: 0.05,
     });
     wallMaterialRef.current = wallMat;
+    roomWallsRef.current = [];
     const addWall = (
       geo: THREE.PlaneGeometry,
       pos: THREE.Vector3,
@@ -670,6 +685,7 @@ const ThreeDView = () => {
       wall.position.copy(pos);
       wall.rotation.y = rotY;
       wall.receiveShadow = true;
+      roomWallsRef.current.push(wall);
       scene.add(wall);
     };
     addWall(
@@ -693,6 +709,52 @@ const ThreeDView = () => {
       -Math.PI / 2,
     );
 
+    const baseboardHeight = 0.28;
+    const baseboardDepth = 0.08;
+    const baseboardMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(wallColor).multiplyScalar(0.82),
+      roughness: 0.55,
+      metalness: 0.02,
+    });
+    const frontBackBaseboard = new THREE.BoxGeometry(
+      rw,
+      baseboardHeight,
+      baseboardDepth,
+    );
+    const leftRightBaseboard = new THREE.BoxGeometry(
+      baseboardDepth,
+      baseboardHeight,
+      rl,
+    );
+
+    const frontBaseboard = new THREE.Mesh(frontBackBaseboard, baseboardMat);
+    frontBaseboard.position.set(
+      0,
+      baseboardHeight / 2,
+      -rl / 2 + baseboardDepth / 2,
+    );
+    frontBaseboard.castShadow = true;
+    frontBaseboard.receiveShadow = true;
+    scene.add(frontBaseboard);
+
+    const backBaseboard = frontBaseboard.clone();
+    backBaseboard.position.z = rl / 2 - baseboardDepth / 2;
+    scene.add(backBaseboard);
+
+    const leftBaseboard = new THREE.Mesh(leftRightBaseboard, baseboardMat);
+    leftBaseboard.position.set(
+      -rw / 2 + baseboardDepth / 2,
+      baseboardHeight / 2,
+      0,
+    );
+    leftBaseboard.castShadow = true;
+    leftBaseboard.receiveShadow = true;
+    scene.add(leftBaseboard);
+
+    const rightBaseboard = leftBaseboard.clone();
+    rightBaseboard.position.x = rw / 2 - baseboardDepth / 2;
+    scene.add(rightBaseboard);
+
     // Ceiling
     const ceiling = new THREE.Mesh(
       new THREE.PlaneGeometry(rw, rl),
@@ -708,19 +770,28 @@ const ThreeDView = () => {
 
     // Lights
     scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-    const hemi = new THREE.HemisphereLight(0xfff5e5, 0x2a2018, 0.35);
+    const hemi = new THREE.HemisphereLight(0xfff5e5, 0x2a2018, 0.28);
     scene.add(hemi);
-    const sun = new THREE.DirectionalLight(0xfff4e6, 1.5);
+    const sun = new THREE.DirectionalLight(0xfff4e6, 2.1);
     sun.position.set(rw * 0.5, WALL_HEIGHT * 1.5, rl * 0.8);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.radius = 3;
+    sun.shadow.bias = -0.0002;
     scene.add(sun);
-    scene.add(new THREE.DirectionalLight(0xffffff, 0.3).translateX(-rw));
-    const pointLight = new THREE.PointLight(0xffe8c7, 1.2, 60, 1.6);
+    scene.add(new THREE.DirectionalLight(0xffffff, 0.16).translateX(-rw));
+    const pointLight = new THREE.PointLight(0xffe8c7, 0.85, 60, 1.8);
     pointLight.position.set(-rw * 0.2, WALL_HEIGHT * 0.9, -rl * 0.1);
     scene.add(pointLight);
 
-    const spotlight = new THREE.SpotLight(0xfff1db, 2, 0, Math.PI / 5, 0.35, 1);
+    const spotlight = new THREE.SpotLight(
+      0xfff1db,
+      1.2,
+      0,
+      Math.PI / 5,
+      0.38,
+      1,
+    );
     spotlight.position.set(rw * 0.25, WALL_HEIGHT * 1.4, rl * 0.2);
     spotlight.castShadow = true;
     spotlight.shadow.mapSize.set(1024, 1024);
@@ -754,11 +825,31 @@ const ThreeDView = () => {
     const minRadius = Math.max(4, maxDim * 0.45);
     const maxRadius = Math.max(minRadius + 2, maxDim * 3.2);
 
+    const updateWallVisibility = () => {
+      const walls = roomWallsRef.current;
+      if (walls.length < 4) return;
+
+      const sortedByDistance = [...walls].sort(
+        (a, b) =>
+          camera.position.distanceToSquared(b.position) -
+          camera.position.distanceToSquared(a.position),
+      );
+
+      walls.forEach((wall) => {
+        wall.visible = false;
+      });
+
+      sortedByDistance.slice(0, 2).forEach((wall) => {
+        wall.visible = true;
+      });
+    };
+
     const updateCamera = () => {
       camera.position.x = radius * Math.sin(theta) * Math.cos(phi);
       camera.position.y = radius * Math.sin(phi);
       camera.position.z = radius * Math.cos(theta) * Math.cos(phi);
       camera.lookAt(0, WALL_HEIGHT * 0.3, 0);
+      updateWallVisibility();
     };
 
     const syncZoomLevel = () => {
@@ -974,9 +1065,12 @@ const ThreeDView = () => {
       floorTextureRef.current = null;
       aoTextureRef.current?.dispose();
       aoTextureRef.current = null;
+      wallDetailTextureRef.current?.dispose();
+      wallDetailTextureRef.current = null;
       floorMaterialRef.current = null;
       wallMaterialRef.current = null;
       ceilingMaterialRef.current = null;
+      roomWallsRef.current = [];
       envTexture.dispose();
       pmrem.dispose();
       scene.traverse((obj) => {
@@ -1263,7 +1357,9 @@ const ThreeDView = () => {
         materials.forEach((material) => {
           const mat = material as THREE.MeshStandardMaterial;
           if ("emissive" in mat) {
-            mat.emissive.set(isSelected ? highlight : new THREE.Color(0x000000));
+            mat.emissive.set(
+              isSelected ? highlight : new THREE.Color(0x000000),
+            );
             mat.emissiveIntensity = isSelected ? 0.5 : 0;
             mat.needsUpdate = true;
           }
